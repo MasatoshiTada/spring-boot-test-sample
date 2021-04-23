@@ -22,7 +22,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -99,15 +98,12 @@ public class CustomerControllerTest {
     class 追加の実行 {
 
         final MultiValueMap<String, String> formData =
-                new LinkedMultiValueMap<>();
-
-        @BeforeEach
-        void setUp() {
-            formData.add("firstName", "天");
-            formData.add("lastName", "山﨑");
-            formData.add("email", "tyamasaki@sakura.com");
-            formData.add("birthday", "2005-09-28");
-        }
+                new LinkedMultiValueMap<>() {{
+                    add("firstName", "天");
+                    add("lastName", "山﨑");
+                    add("email", "tyamasaki@sakura.com");
+                    add("birthday", "2005-09-28");
+                }};
 
         @TestWithUser
         void userはNG() throws Exception {
