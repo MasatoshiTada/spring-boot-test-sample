@@ -2,9 +2,10 @@ package com.example.web.web.controller;
 
 import com.example.web.security.details.AccountDetailsService;
 import com.example.web.service.CustomerService;
-import org.junit.jupiter.api.BeforeEach;
+import com.example.web.web.annotation.TestWithAdmin;
+import com.example.web.web.annotation.TestWithAnonymous;
+import com.example.web.web.annotation.TestWithUser;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
 import org.mybatis.spring.boot.test.autoconfigure.AutoConfigureMybatis;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -12,16 +13,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithAnonymousUser;
-import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -151,24 +145,4 @@ public class CustomerControllerTest {
                     .andExpect(redirectedUrlPattern("**/login"));
         }
     }
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    @Test
-    @WithUserDetails(userDetailsServiceBeanName = "accountDetailsService",
-            value = "user@example.com")
-    @interface TestWithUser {}
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    @Test
-    @WithUserDetails(userDetailsServiceBeanName = "accountDetailsService",
-            value = "admin@example.com")
-    @interface TestWithAdmin {}
-
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.METHOD)
-    @Test
-    @WithAnonymousUser
-    @interface TestWithAnonymous {}
 }
