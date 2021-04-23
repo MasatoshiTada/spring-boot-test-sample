@@ -14,6 +14,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -37,61 +38,60 @@ public class CustomerControllerTest {
 
     @Nested
     class トップ画面へのアクセス {
+        final MockHttpServletRequestBuilder request = get("/")
+                .accept(MediaType.TEXT_HTML);
+
         @TestWithUser
         void userはOK() throws Exception {
-            mvc.perform(get("/")
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().isOk())
+            mvc.perform(request)
+                    .andExpect(status().isOk())
                     .andExpect(view().name("index"));
         }
 
         @TestWithAdmin
         void adminはOK() throws Exception {
-            mvc.perform(get("/")
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().isOk())
+            mvc.perform(request)
+                    .andExpect(status().isOk())
                     .andExpect(view().name("index"));
         }
 
         @TestWithAnonymous
         void 匿名はNG_ログイン画面にリダイレクトされる() throws Exception {
-            mvc.perform(get("/")
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().is3xxRedirection())
+            mvc.perform(request)
+                    .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrlPattern("**/login"));
         }
     }
 
     @Nested
     class 追加画面へのアクセス {
+        final MockHttpServletRequestBuilder request = get("/insertMain")
+                .accept(MediaType.TEXT_HTML);
+
         @TestWithUser
         void userはNG() throws Exception {
-            mvc.perform(get("/insertMain")
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().isForbidden());
+            mvc.perform(request)
+                    .andExpect(status().isForbidden());
         }
 
         @TestWithAdmin
         void adminはOK() throws Exception {
-            mvc.perform(get("/insertMain")
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().isOk())
+            mvc.perform(request)
+                    .andExpect(status().isOk())
                     .andExpect(view().name("insertMain"));
         }
 
         @TestWithAnonymous
         void 匿名はNG_ログイン画面にリダイレクトされる() throws Exception {
-            mvc.perform(get("/")
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().is3xxRedirection())
+            mvc.perform(request)
+                    .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrlPattern("**/login"));
         }
     }
 
     @Nested
     class 追加の実行 {
-
-        final MultiValueMap<String, String> formData =
+        final MultiValueMap<String, String> validData =
                 new LinkedMultiValueMap<>() {{
                     add("firstName", "天");
                     add("lastName", "山﨑");
@@ -99,49 +99,44 @@ public class CustomerControllerTest {
                     add("birthday", "2005-09-28");
                 }};
 
-        @TestWithUser
-        void userはNG() throws Exception {
-            mvc.perform(post("/insertComplete")
+        MockHttpServletRequestBuilder createRequest(MultiValueMap<String, String> formData) {
+            return post("/insertComplete")
                     .params(formData)
                     .with(csrf())
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().isForbidden());
+                    .accept(MediaType.TEXT_HTML);
+        }
+
+        @TestWithUser
+        void userはNG() throws Exception {
+            mvc.perform(createRequest(validData))
+                    .andExpect(status().isForbidden());
         }
 
         @TestWithAdmin
         void adminはOK() throws Exception {
-            mvc.perform(post("/insertComplete")
-                    .params(formData)
-                    .with(csrf())
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().is3xxRedirection())
+            mvc.perform(createRequest(validData))
+                    .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/"));
         }
 
         @TestWithAdmin
         void 不正なデータを登録しようとするとバリデーションエラーで入力画面に戻る() throws Exception {
-            MultiValueMap<String, String> invalidFormData =
+            MultiValueMap<String, String> invalidData =
                     new LinkedMultiValueMap<>() {{
                         add("firstName", "");
                         add("lastName", "");
                         add("email", "");
                         add("birthday", "");
                     }};
-            mvc.perform(post("/insertComplete")
-                    .params(invalidFormData)
-                    .with(csrf())
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().isOk())
+            mvc.perform(createRequest(invalidData))
+                    .andExpect(status().isOk())
                     .andExpect(view().name("insertMain"));
         }
 
         @TestWithAnonymous
         void 匿名はNG_ログイン画面にリダイレクトされる() throws Exception {
-            mvc.perform(post("/insertComplete")
-                    .params(formData)
-                    .with(csrf())
-                    .accept(MediaType.TEXT_HTML)
-            ).andExpect(status().is3xxRedirection())
+            mvc.perform(createRequest(validData))
+                    .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrlPattern("**/login"));
         }
     }

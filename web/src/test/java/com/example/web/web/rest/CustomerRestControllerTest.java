@@ -85,7 +85,7 @@ public class CustomerRestControllerTest {
         @BeforeEach
         void setUp() {
             doAnswer(invocation -> {
-                Customer customer = (Customer) invocation.getArgument(0);
+                Customer customer = invocation.getArgument(0);
                 customer.setId(999);
                 return null;
             }).when(customerService).save(any(Customer.class));
