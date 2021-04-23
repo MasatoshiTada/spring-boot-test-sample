@@ -1,0 +1,12 @@
+■全顧客取得
+ログイン後にブラウザで http://localhost:8080/api/customers
+
+■CSRFトークン取得
+ログイン後にブラウザで http://localhost:8080/api/csrf
+
+■顧客登録
+curl -v -X POST -H "Content-Type: application/json" \
+-d @post.json \
+-H "X-CSRF-TOKEN: cf781328-a2f4-49ac-9118-28a5873cedb7" \
+-b "JSESSIONID=CFAA977BD9622B311F45E3644BB7580F" \
+http://localhost:8080/api/customers
