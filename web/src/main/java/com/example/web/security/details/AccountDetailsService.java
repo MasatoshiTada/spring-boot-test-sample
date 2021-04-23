@@ -24,10 +24,10 @@ public class AccountDetailsService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Account account = accountMapper.findByEmail(username);
         List<String> authorities = accountMapper.findAuthoritiesByEmail(username);
-        account.setAuthorities(authorities);
         if (account == null) {
             throw new UsernameNotFoundException("user not found");
         }
+        account.setAuthorities(authorities);
         AccountDetails accountDetails = new AccountDetails(account);
         return accountDetails;
     }
