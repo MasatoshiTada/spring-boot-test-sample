@@ -124,6 +124,23 @@ public class CustomerControllerTest {
                     .andExpect(redirectedUrl("/"));
         }
 
+        @TestWithAdmin
+        void 不正なデータを登録しようとするとバリデーションエラーで入力画面に戻る() throws Exception {
+            MultiValueMap<String, String> invalidFormData =
+                    new LinkedMultiValueMap<>() {{
+                        add("firstName", "");
+                        add("lastName", "");
+                        add("email", "");
+                        add("birthday", "");
+                    }};
+            mvc.perform(post("/insertComplete")
+                    .params(invalidFormData)
+                    .with(csrf())
+                    .accept(MediaType.TEXT_HTML)
+            ).andExpect(status().isOk())
+                    .andExpect(view().name("insertMain"));
+        }
+
         @TestWithAnonymous
         void 匿名はNG_ログイン画面にリダイレクトされる() throws Exception {
             mvc.perform(post("/insertComplete")
