@@ -1,5 +1,6 @@
 package com.example.web.rest;
 
+import com.example.security.config.SecurityConfig;
 import com.example.web.annotation.TestWithAdmin;
 import com.example.web.annotation.TestWithAnonymous;
 import com.example.persistence.entity.Customer;
@@ -28,7 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(includeFilters = @ComponentScan.Filter(
         type = FilterType.ASSIGNABLE_TYPE,
-        classes = {AccountDetailsService.class}
+        classes = {AccountDetailsService.class, SecurityConfig.class}
 ))
 @AutoConfigureMybatis
 public class CustomerRestControllerTest {
@@ -44,7 +45,17 @@ public class CustomerRestControllerTest {
     class 全顧客の取得 {
         final MockHttpServletRequestBuilder request = get("/api/customers")
                 .accept(MediaType.APPLICATION_JSON);
-        final String expectedJson = "[{\"id\":1,\"firstName\":\"友香\",\"lastName\":\"菅井\",\"email\":\"ysugai@sakura.com\",\"birthday\":\"1995-11-29\"}]";
+        final String expectedJson = """
+                [
+                    {
+                        "id": 1,
+                        "firstName": "友香",
+                        "lastName": "菅井",
+                        "email": "ysugai@sakura.com",
+                        "birthday": "1995-11-29"
+                    }
+                ]
+                """;
 
         @BeforeEach
         void setUp() {
@@ -79,8 +90,14 @@ public class CustomerRestControllerTest {
     class 顧客の登録 {
         final MockHttpServletRequestBuilder request = post("/api/customers")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"firstName\":\"天\",\"lastName\":\"山﨑\",\"email\":\"tyamasaki@sakura.com\",\"birthday\":\"2005-09-28\"}")
-                .with(csrf().asHeader());
+                .content("""
+                        {
+                            "firstName":"天",
+                            "lastName":"山﨑",
+                            "email":"tyamasaki@sakura.com",
+                            "birthday":"2005-09-28"
+                        }
+                        """);
 
         @BeforeEach
         void setUp() {

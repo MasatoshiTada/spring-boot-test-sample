@@ -1,5 +1,6 @@
 package com.example.web.controller;
 
+import com.example.security.config.SecurityConfig;
 import com.example.security.details.AccountDetailsService;
 import com.example.service.CustomerService;
 import org.junit.jupiter.api.DisplayName;
@@ -21,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(includeFilters = @ComponentScan.Filter(
         type = FilterType.ASSIGNABLE_TYPE,
-        classes = {AccountDetailsService.class}
+        classes = {AccountDetailsService.class, SecurityConfig.class}
 ))
 @AutoConfigureMybatis
 public class LoginControllerTest {

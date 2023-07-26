@@ -1,9 +1,12 @@
 DROP TABLE IF EXISTS account_authority;
 DROP TABLE IF EXISTS account;
 DROP TABLE IF EXISTS customer;
+DROP SEQUENCE IF EXISTS seq_customer_id;
+
+CREATE SEQUENCE seq_customer_id START WITH 1 INCREMENT BY 1 NO CYCLE;
 
 CREATE TABLE customer (
-  id INTEGER PRIMARY KEY AUTO_INCREMENT,
+  id INTEGER PRIMARY KEY DEFAULT nextval('seq_customer_id'),
   first_name VARCHAR(32) NOT NULL,
   last_name VARCHAR(32) NOT NULL,
   email VARCHAR(128) NOT NULL,
