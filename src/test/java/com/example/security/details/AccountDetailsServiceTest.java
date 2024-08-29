@@ -3,10 +3,14 @@ package com.example.security.details;
 import com.example.persistence.entity.Account;
 import com.example.persistence.mapper.AccountMapper;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -14,45 +18,40 @@ import static org.mockito.Mockito.*;
 public class AccountDetailsServiceTest {
 
     AccountDetailsService accountDetailsService;
+
     AccountMapper accountMapper;
 
     @BeforeEach
-    void setUp() {
+    void beforeEach() {
         accountMapper = mock(AccountMapper.class);
         accountDetailsService = new AccountDetailsService(accountMapper);
     }
 
-    @Test
-    void 存在するユーザー名でAccountDetailsが返る() {
-        String email = "user@example.com";
-        Account account = new Account(1, "user", email, "user");
-        List<String> roleList = List.of("ROLE_USER");
-        when(accountMapper.findByEmail(email))
-                .thenReturn(account);
-        when(accountMapper.findAuthoritiesByEmail(email))
-                .thenReturn(roleList);
-        AccountDetails accountDetails = (AccountDetails) accountDetailsService.loadUserByUsername(email);
-        assertAll(
-                () -> assertNotNull(accountDetails.getAccount()),
-                () -> assertEquals(account.getEmail(), accountDetails.getUsername()),
-                () -> assertEquals(account.getPassword(), accountDetails.getPassword()),
-                () -> assertEquals(1, accountDetails.getAuthorities().size()),
-                () -> assertTrue(accountDetails.isAccountNonExpired()),
-                () -> assertTrue(accountDetails.isAccountNonLocked()),
-                () -> assertTrue(accountDetails.isCredentialsNonExpired()),
-                () -> assertTrue(accountDetails.isEnabled())
-                );
-    }
+    @Nested
+    @DisplayName("loadUserByUsername()")
+    class LoadUserByUsername {
+        @Test
+        @DisplayName("存在するメールアドレスを指定すると、AccountDetailsが返る")
+        void success() {
+            when(accountMapper.selectByMailAddress(any()))
+                    .thenReturn(Optional.of(new Account(1, "user", "user@example.com", "user")));
+            when(accountMapper.selectAuthoritiesByMailAddress("user@example.com"))
+                    .thenReturn(List.of("ROLE_USER"));
+            AccountDetails actual = (AccountDetails) accountDetailsService.loadUserByUsername("user@example.com");
+            assertEquals(new AccountDetails(new Account(1, "user", "user@example.com", "user"),
+                    AuthorityUtils.createAuthorityList(List.of("ROLE_USER"))), actual);
+        }
 
-    @Test
-    void 存在しないユーザー名でUsernameNotFoundExceptionが発生() {
-        String email = "user@example.com";
-        when(accountMapper.findByEmail(email))
-                .thenReturn(new Account(1, "user", email, "user"));
-        when(accountMapper.findAuthoritiesByEmail(email))
-                .thenReturn(List.of("ROLE_USER"));
-        assertThrows(UsernameNotFoundException.class, () -> {
-            accountDetailsService.loadUserByUsername("hoge@example.com");
-        });
+        @Test
+        @DisplayName("存在しないメールアドレスを指定すると、UsernameNotFoundExceptionが発生")
+        void error() {
+            when(accountMapper.selectByMailAddress(any()))
+                    .thenReturn(Optional.empty());
+            when(accountMapper.selectAuthoritiesByMailAddress(any()))
+                    .thenReturn(List.of());
+            assertThrows(UsernameNotFoundException.class, () -> {
+                accountDetailsService.loadUserByUsername("hoge@example.com");
+            });
+        }
     }
 }

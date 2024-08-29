@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
+/**
+ * 社員情報に関するコントローラークラスです。
+ */
 @Controller
 public class CustomerController {
 
@@ -22,38 +25,44 @@ public class CustomerController {
     }
 
     /**
-     * 社員一覧画面に遷移するコントローラーメソッド。
+     * 社員一覧画面に遷移するコントローラーメソッドです。
      */
     @GetMapping("/")
     public String index(Model model) {
-        List<Customer> customers = customerService.findAll();
-        model.addAttribute("customers", customers);
+        // 全ての社員を取得
+        List<Customer> customerList = customerService.findAll();
+        // 一覧画面に社員リストを渡す
+        model.addAttribute("customerList", customerList);
+        // 一覧画面に遷移
         return "index";
     }
 
     /**
-     * 社員追加画面に遷移するコントローラーメソッド。
+     * 社員追加画面に遷移するコントローラーメソッドです。
      */
-    @GetMapping("/insertMain")
-    public String insertMain(Model model) {
+    @GetMapping("/saveMain")
+    public String saveMain(Model model) {
         // フィールドが全てnullのフォームインスタンスを追加する
-        model.addAttribute(CustomerForm.createEmptyForm());
-        return "insertMain";
+        model.addAttribute(CustomerForm.empty());
+        return "saveMain";
     }
 
     /**
-     * 社員の追加を行うコントローラーメソッド。
+     * 社員の追加を行うコントローラーメソッドです。
      */
-    @PostMapping("/insertComplete")
-    public String insertComplete(
+    @PostMapping("/saveComplete")
+    public String saveComplete(
             @Validated CustomerForm customerForm,
             BindingResult bindingResult) {
+        // 入力エラーがある場合は追加画面に戻る
         if (bindingResult.hasErrors()) {
-            return "insertMain";
+            return "saveMain";
         }
         // フォームをエンティティに変換
-        Customer customer = customerForm.convertToEntity();
+        Customer customer = customerForm.toEntity();
+        // 追加を実行
         customerService.save(customer);
+        // 一覧画面にリダイレクト
         return "redirect:/";
     }
 }

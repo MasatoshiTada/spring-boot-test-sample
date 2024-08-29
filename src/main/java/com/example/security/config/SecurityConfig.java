@@ -10,9 +10,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Spring Securityの設定クラスです。
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    /**
+     * 認証認可などの設定を行います。
+     * @param http HttpSecurity
+     * @return SecurityFilterChain
+     * @throws Exception 例外（滅多に発生しません）
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.formLogin(login -> login
@@ -22,20 +31,21 @@ public class SecurityConfig {
                 .realmName("Spring")
         ).authorizeHttpRequests(authz -> authz
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
-                .requestMatchers("/insert*").hasRole("ADMIN")
+                .requestMatchers("/save*").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/customers").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/csrf").permitAll()
                 .anyRequest().authenticated()
         ).logout(logout -> logout
                 .invalidateHttpSession(true)
                 .permitAll()
-        ).csrf(csrf -> csrf
-                // 簡略化のため、Web APIへのCSRF対策を無効化しています。
-                // 実際に無効化するかどうかは慎重に検討してください。
-                .ignoringRequestMatchers("/api/**")
         );
         return http.build();
     }
 
+    /**
+     * パスワードエンコーダーのBeanを定義します。
+     * @return パスワードエンコーダー
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

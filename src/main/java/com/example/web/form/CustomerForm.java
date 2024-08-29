@@ -1,70 +1,36 @@
 package com.example.web.form;
 
 import com.example.persistence.entity.Customer;
-import org.hibernate.validator.constraints.Length;
-import org.springframework.format.annotation.DateTimeFormat;
+import com.example.web.constraint.Birthday;
+import com.example.web.constraint.MailAddress;
+import com.example.web.constraint.FirstName;
+import com.example.web.constraint.LastName;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
-public class CustomerForm {
-
-    @NotBlank
-    @Length(min = 1, max = 32)
-    private String firstName;
-
-    @NotBlank
-    @Length(min = 1, max = 32)
-    private String lastName;
-
-    @NotBlank
-    @Length(min = 1, max = 128)
-    @Email
-    private String email;
-
-    @NotNull
-    @DateTimeFormat(pattern = "uuuu-MM-dd")
-    private LocalDate birthday;
-
-    public CustomerForm(String firstName,
-                        String lastName,
-                        String email,
-                        LocalDate birthday) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.birthday = birthday;
-    }
+/**
+ * 顧客情報のフォームクラスです。
+ * @param firstName 名
+ * @param lastName 姓
+ * @param mailAddress メールアドレス
+ * @param birthday 誕生日
+ */
+public record CustomerForm(@FirstName String firstName,
+                           @LastName String lastName,
+                           @MailAddress String mailAddress,
+                           @Birthday String birthday) {
 
     /**
-     * フィールドがすべて空（null）のCustomerFormインスタンスを生成するメソッド
+     * フィールドがすべて空（null）のCustomerFormインスタンスを生成します。
      */
-    public static CustomerForm createEmptyForm() {
+    public static CustomerForm empty() {
         return new CustomerForm(null, null, null, null);
     }
 
     /**
-     * エンティティのCustomerに変換するメソッド
+     * エンティティのCustomerに変換します。
      */
-    public Customer convertToEntity() {
-        return new Customer(firstName, lastName, email, birthday);
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public LocalDate getBirthday() {
-        return birthday;
+    public Customer toEntity() {
+        return new Customer(firstName, lastName, mailAddress, LocalDate.parse(birthday));
     }
 }

@@ -1,20 +1,15 @@
 package com.example.web.rest;
 
-import com.example.security.config.SecurityConfig;
+import com.example.annotation.RestControllerTest;
+import com.example.service.CustomerService;
 import com.example.web.annotation.TestWithAdmin;
 import com.example.web.annotation.TestWithAnonymous;
 import com.example.persistence.entity.Customer;
-import com.example.security.details.AccountDetailsService;
-import com.example.service.CustomerService;
 import com.example.web.annotation.TestWithUser;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.mybatis.spring.boot.test.autoconfigure.AutoConfigureMybatis;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -27,22 +22,19 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(includeFilters = @ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE,
-        classes = {AccountDetailsService.class, SecurityConfig.class}
-))
-@AutoConfigureMybatis
+@RestControllerTest
 public class CustomerRestControllerTest {
 
     @Autowired
     MockMvc mvc;
 
-    // CustomerServiceをMockitoでモック化する
-    @MockBean
+    // モックのCustomerServiceをDI
+    @Autowired
     CustomerService customerService;
 
     @Nested
-    class 全顧客の取得 {
+    @DisplayName("全顧客の取得")
+    class GetCustomers {
         final MockHttpServletRequestBuilder request = get("/api/customers")
                 .accept(MediaType.APPLICATION_JSON);
         final String expectedJson = """
@@ -51,56 +43,72 @@ public class CustomerRestControllerTest {
                         "id": 1,
                         "firstName": "友香",
                         "lastName": "菅井",
-                        "email": "ysugai@sakura.com",
+                        "mailAddress": "ysugai@sakura.com",
                         "birthday": "1995-11-29"
+                    },
+                    {
+                        "id": 2,
+                        "firstName": "久美",
+                        "lastName": "佐々木",
+                        "mailAddress": "ksasaki@hinata.com",
+                        "birthday": "1996-01-22"
                     }
                 ]
                 """;
 
         @BeforeEach
-        void setUp() {
+        void beforeEach() {
             when(customerService.findAll()).thenReturn(List.of(
-                    new Customer(1, "友香", "菅井", "ysugai@sakura.com", LocalDate.of(1995, 11, 29))
-                    )
-            );
+                    new Customer(1, "友香", "菅井", "ysugai@sakura.com", LocalDate.of(1995, 11, 29)),
+                    new Customer(2, "久美", "佐々木", "ksasaki@hinata.com", LocalDate.of(1996, 1, 22))
+            ));
         }
 
         @TestWithUser
-        void userはOK() throws Exception {
+        @DisplayName("userはOK")
+        void userOk() throws Exception {
             mvc.perform(request)
                     .andExpect(status().isOk())
                     .andExpect(content().json(expectedJson));
         }
 
         @TestWithAdmin
-        void adminはOK() throws Exception {
+        @DisplayName("adminはOK")
+        void adminOk() throws Exception {
             mvc.perform(request)
                     .andExpect(status().isOk())
                     .andExpect(content().json(expectedJson));
         }
 
         @TestWithAnonymous
-        void 匿名はNG() throws Exception {
+        @DisplayName("匿名はNG")
+        void anonymousNg() throws Exception {
             mvc.perform(request)
                     .andExpect(status().isUnauthorized());
         }
     }
 
     @Nested
-    class 顧客の登録 {
-        final MockHttpServletRequestBuilder request = post("/api/customers")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
+    @DisplayName("顧客の登録")
+    class PostCustomer {
+        final String validJson = """
                         {
                             "firstName":"天",
                             "lastName":"山﨑",
-                            "email":"tyamasaki@sakura.com",
+                            "mailAddress":"tyamasaki@sakura.com",
                             "birthday":"2005-09-28"
                         }
-                        """);
+                        """;
+
+        MockHttpServletRequestBuilder createRequest(String json) {
+            return post("/api/customers")
+                    .with(csrf())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(json);
+        }
 
         @BeforeEach
-        void setUp() {
+        void beforeEach() {
             doAnswer(invocation -> {
                 Customer customer = invocation.getArgument(0);
                 customer.setId(999);
@@ -109,21 +117,46 @@ public class CustomerRestControllerTest {
         }
 
         @TestWithUser
-        void userはNG() throws Exception {
-            mvc.perform(request)
+        @DisplayName("userはNG")
+        void userNg() throws Exception {
+            mvc.perform(createRequest(validJson))
                     .andExpect(status().isForbidden());
         }
 
         @TestWithAdmin
-        void adminはOK() throws Exception {
-            mvc.perform(request)
+        @DisplayName("adminはOK")
+        void adminOk() throws Exception {
+            mvc.perform(createRequest(validJson))
                     .andExpect(status().isCreated())
-                    .andExpect(header().string("location", "http://localhost/api/customers/999"));
+                    .andExpect(header().string("location", "/api/customers/999"));
+        }
+
+        @TestWithAdmin
+        @DisplayName("adminで不正なデータを登録しようとすると、400 Bad Request")
+        void adminInvalid() throws Exception {
+            mvc.perform(createRequest("""
+                        {
+                            "firstName":"",
+                            "lastName":"",
+                            "mailAddress":"",
+                            "birthday":""
+                        }
+                        """))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().json("""
+                            {
+                                "status":400,
+                                "error":"Bad Request",
+                                "message":"Validation error",
+                                "path":"/api/customers"
+                            }
+                            """));
         }
 
         @TestWithAnonymous
-        void 匿名はNG() throws Exception {
-            mvc.perform(request)
+        @DisplayName("匿名はNG")
+        void anonymousNg() throws Exception {
+            mvc.perform(createRequest(validJson))
                     .andExpect(status().isUnauthorized());
         }
     }

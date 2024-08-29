@@ -9,14 +9,14 @@ CREATE TABLE customer (
   id INTEGER PRIMARY KEY DEFAULT nextval('seq_customer_id'),
   first_name VARCHAR(32) NOT NULL,
   last_name VARCHAR(32) NOT NULL,
-  email VARCHAR(128) NOT NULL,
+  mail_address VARCHAR(128) NOT NULL,
   birthday DATE NOT NULL
 );
 
 CREATE TABLE account (
   id INTEGER PRIMARY KEY,
   name VARCHAR(64) NOT NULL,
-  email VARCHAR(128) UNIQUE NOT NULL,
+  mail_address VARCHAR(128) UNIQUE NOT NULL,
   password VARCHAR(256) NOT NULL
 );
 

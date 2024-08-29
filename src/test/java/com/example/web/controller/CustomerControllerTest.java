@@ -1,18 +1,12 @@
 package com.example.web.controller;
 
-import com.example.security.config.SecurityConfig;
-import com.example.security.details.AccountDetailsService;
-import com.example.service.CustomerService;
+import com.example.annotation.ControllerTest;
 import com.example.web.annotation.TestWithAdmin;
 import com.example.web.annotation.TestWithAnonymous;
 import com.example.web.annotation.TestWithUser;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.mybatis.spring.boot.test.autoconfigure.AutoConfigureMybatis;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -23,41 +17,37 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(includeFilters = @ComponentScan.Filter(
-        type = FilterType.ASSIGNABLE_TYPE,
-        classes = {AccountDetailsService.class, SecurityConfig.class}
-))
-@AutoConfigureMybatis
+@ControllerTest
 public class CustomerControllerTest {
 
     @Autowired
     MockMvc mvc;
 
-    // CustomerServiceをMockitoでモック化する
-    @MockBean
-    CustomerService customerService;
-
     @Nested
-    class トップ画面へのアクセス {
+    @DisplayName("トップ画面へのアクセス")
+    class TopPage {
         final MockHttpServletRequestBuilder request = get("/")
                 .accept(MediaType.TEXT_HTML);
 
         @TestWithUser
-        void userはOK() throws Exception {
+        @DisplayName("userはOK")
+        void userOk() throws Exception {
             mvc.perform(request)
                     .andExpect(status().isOk())
                     .andExpect(view().name("index"));
         }
 
         @TestWithAdmin
-        void adminはOK() throws Exception {
+        @DisplayName("adminはOK")
+        void adminOk() throws Exception {
             mvc.perform(request)
                     .andExpect(status().isOk())
                     .andExpect(view().name("index"));
         }
 
         @TestWithAnonymous
-        void 匿名はNG_ログイン画面にリダイレクトされる() throws Exception {
+        @DisplayName("匿名はログイン画面にリダイレクトされる")
+        void anonymousNg() throws Exception {
             mvc.perform(request)
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrlPattern("**/login"));
@@ -65,25 +55,29 @@ public class CustomerControllerTest {
     }
 
     @Nested
-    class 追加画面へのアクセス {
-        final MockHttpServletRequestBuilder request = get("/insertMain")
+    @DisplayName("追加画面へのアクセス")
+    class SaveMain {
+        final MockHttpServletRequestBuilder request = get("/saveMain")
                 .accept(MediaType.TEXT_HTML);
 
         @TestWithUser
-        void userはNG() throws Exception {
+        @DisplayName("userはNG")
+        void userNg() throws Exception {
             mvc.perform(request)
                     .andExpect(status().isForbidden());
         }
 
         @TestWithAdmin
-        void adminはOK() throws Exception {
+        @DisplayName("adminはOK")
+        void adminOk() throws Exception {
             mvc.perform(request)
                     .andExpect(status().isOk())
-                    .andExpect(view().name("insertMain"));
+                    .andExpect(view().name("saveMain"));
         }
 
         @TestWithAnonymous
-        void 匿名はNG_ログイン画面にリダイレクトされる() throws Exception {
+        @DisplayName("匿名はログイン画面にリダイレクトされる")
+        void anonymousNg() throws Exception {
             mvc.perform(request)
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrlPattern("**/login"));
@@ -91,51 +85,56 @@ public class CustomerControllerTest {
     }
 
     @Nested
-    class 追加の実行 {
+    @DisplayName("追加の実行")
+    class SaveComplete {
         final MultiValueMap<String, String> validData =
                 new LinkedMultiValueMap<>() {{
                     add("firstName", "天");
                     add("lastName", "山﨑");
-                    add("email", "tyamasaki@sakura.com");
+                    add("mailAddress", "tyamasaki@sakura.com");
                     add("birthday", "2005-09-28");
                 }};
 
         MockHttpServletRequestBuilder createRequest(MultiValueMap<String, String> formData) {
-            return post("/insertComplete")
+            return post("/saveComplete")
                     .params(formData)
                     .with(csrf())
                     .accept(MediaType.TEXT_HTML);
         }
 
         @TestWithUser
-        void userはNG() throws Exception {
+        @DisplayName("userはNG")
+        void userNg() throws Exception {
             mvc.perform(createRequest(validData))
                     .andExpect(status().isForbidden());
         }
 
         @TestWithAdmin
-        void adminはOK() throws Exception {
+        @DisplayName("adminはOK")
+        void adminOk() throws Exception {
             mvc.perform(createRequest(validData))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrl("/"));
         }
 
         @TestWithAdmin
-        void 不正なデータを登録しようとするとバリデーションエラーで入力画面に戻る() throws Exception {
+        @DisplayName("adminで不正なデータを登録しようとすると、バリデーションエラーで入力画面に戻る")
+        void adminInvalid() throws Exception {
             MultiValueMap<String, String> invalidData =
                     new LinkedMultiValueMap<>() {{
                         add("firstName", "");
                         add("lastName", "");
-                        add("email", "");
+                        add("mailAddress", "");
                         add("birthday", "");
                     }};
             mvc.perform(createRequest(invalidData))
                     .andExpect(status().isOk())
-                    .andExpect(view().name("insertMain"));
+                    .andExpect(view().name("saveMain"));
         }
 
         @TestWithAnonymous
-        void 匿名はNG_ログイン画面にリダイレクトされる() throws Exception {
+        @DisplayName("匿名はログイン画面にリダイレクトされる")
+        void anonymousNg() throws Exception {
             mvc.perform(createRequest(validData))
                     .andExpect(status().is3xxRedirection())
                     .andExpect(redirectedUrlPattern("**/login"));

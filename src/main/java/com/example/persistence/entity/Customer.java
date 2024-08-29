@@ -1,10 +1,12 @@
 package com.example.persistence.entity;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 /**
- * DBのcustomerテーブルに対応したエンティティクラス
+ * 顧客を表すエンティティクラスです。
  */
+// MyBatisのuseGeneratedKeys属性を使用するために、あえてrecordではなくclassを使用しています
 public class Customer {
 
     private Integer id;
@@ -13,25 +15,26 @@ public class Customer {
 
     private String lastName;
 
-    private String email;
+    private String mailAddress;
 
     private LocalDate birthday;
 
-    public Customer() {}
+    public Customer() {
+    }
 
-    public Customer(Integer id, String firstName, String lastName, String email, LocalDate birthday) {
+    public Customer(Integer id, String firstName, String lastName, String mailAddress, LocalDate birthday) {
         this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
+        this.mailAddress = mailAddress;
         this.birthday = birthday;
     }
 
-    public Customer(String firstName, String lastName, String email, LocalDate birthday) {
-        this(null, firstName, lastName, email, birthday);
+    public Customer(String firstName, String lastName, String mailAddress, LocalDate birthday) {
+        this(null, firstName, lastName, mailAddress, birthday);
     }
 
-    public Integer getId() {
+    public Integer id() {
         return id;
     }
 
@@ -39,36 +42,20 @@ public class Customer {
         this.id = id;
     }
 
-    public String getFirstName() {
+    public String firstName() {
         return firstName;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
+    public String lastName() {
         return lastName;
     }
 
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
+    public String mailAddress() {
+        return mailAddress;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public LocalDate getBirthday() {
+    public LocalDate birthday() {
         return birthday;
-    }
-
-    public void setBirthday(LocalDate birthday) {
-        this.birthday = birthday;
     }
 
     @Override
@@ -77,8 +64,20 @@ public class Customer {
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
+                ", mailAddress='" + mailAddress + '\'' +
                 ", birthday=" + birthday +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Customer customer)) return false;
+        return Objects.equals(id, customer.id) && Objects.equals(firstName, customer.firstName) && Objects.equals(lastName, customer.lastName) && Objects.equals(mailAddress, customer.mailAddress) && Objects.equals(birthday, customer.birthday);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, firstName, lastName, mailAddress, birthday);
     }
 }

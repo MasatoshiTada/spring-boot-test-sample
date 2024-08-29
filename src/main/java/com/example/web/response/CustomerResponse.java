@@ -4,43 +4,23 @@ import com.example.persistence.entity.Customer;
 
 import java.time.LocalDate;
 
-public class CustomerResponse {
-
-    private Integer id;
-
-    private String firstName;
-
-    private String lastName;
-
-    private String email;
-
-    private LocalDate birthday;
+/**
+ * 顧客情報のレスポンスJSONを表すレコードクラスです。
+ * @param id ID
+ * @param firstName 名
+ * @param lastName 姓
+ * @param mailAddress メールアドレス
+ * @param birthday 誕生日
+ */
+public record CustomerResponse(
+        Integer id,
+        String firstName,
+        String lastName,
+        String mailAddress,
+        LocalDate birthday
+) {
 
     public CustomerResponse(Customer customer) {
-        this.id = customer.getId();
-        this.firstName = customer.getFirstName();
-        this.lastName = customer.getLastName();
-        this.email = customer.getEmail();
-        this.birthday = customer.getBirthday();
-    }
-
-    public Integer getId() {
-        return id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public LocalDate getBirthday() {
-        return birthday;
+        this(customer.id(), customer.firstName(), customer.lastName(), customer.mailAddress(), customer.birthday());
     }
 }

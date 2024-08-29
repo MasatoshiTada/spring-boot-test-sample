@@ -1,8 +1,6 @@
-version: "3.9"
-
 services:
   postgresql:
-    container_name: postgres-pictopass
+    container_name: postgres
     image: postgres:15.3
     ports:
       - "5432:5432"

@@ -1,19 +1,39 @@
 package com.example.service;
 
 import com.example.persistence.entity.Customer;
+import com.example.persistence.mapper.CustomerMapper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-public interface CustomerService {
+/**
+ * 顧客情報を操作するサービスクラスです。
+ */
+@Service
+public class CustomerService {
+
+    private final CustomerMapper customerMapper;
+
+    public CustomerService(CustomerMapper customerMapper) {
+        this.customerMapper = customerMapper;
+    }
 
     /**
-     * 顧客を全件検索する
+     * 顧客情報を全件取得します。
+     * @return 顧客情報のリスト
      */
-    List<Customer> findAll();
+    @Transactional(readOnly = true)
+    public List<Customer> findAll() {
+        return customerMapper.selectAll();
+    }
 
     /**
-     * 1件の顧客をDBに追加する
-     * @param customer 追加する顧客
+     * 顧客情報を登録します。
+     * @param customer 顧客情報
      */
-    void save(Customer customer);
+    @Transactional(readOnly = false)
+    public void save(Customer customer) {
+        customerMapper.insert(customer);
+    }
 }

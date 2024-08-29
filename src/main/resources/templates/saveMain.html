@@ -12,7 +12,7 @@
 
 <h1>新規追加</h1>
 <a href="index.html" th:href="@{/}">顧客一覧へ</a>
-<form method="post" action="index.html" th:action="@{insertComplete}" th:object="${customerForm}">
+<form method="post" action="index.html" th:action="@{saveComplete}" th:object="${customerForm}">
     <table border="1">
         <tr>
             <th>ID</th>
@@ -35,14 +35,14 @@
         <tr>
             <th>メールアドレス</th>
             <td>
-                <input type="text" name="email" th:field="*{email}" placeholder="128文字以内、Eメール形式">
-                <div th:if="${#fields.hasErrors('email')}" th:errors="*{email}" class="error"></div>
+                <input type="text" name="email" th:field="*{mailAddress}" placeholder="128文字以内、Eメール形式">
+                <div th:if="${#fields.hasErrors('mailAddress')}" th:errors="*{mailAddress}" class="error"></div>
             </td>
         </tr>
         <tr>
             <th>誕生日</th>
             <td>
-                <input type="date" name="birthday" th:field="*{birthday}" placeholder="uuuu-MM-dd">
+                <input type="date" name="birthday" th:field="*{birthday}" placeholder="yyyy-MM-dd">
                 <div th:if="${#fields.hasErrors('birthday')}" th:errors="*{birthday}" class="error"></div>
             </td>
         </tr>

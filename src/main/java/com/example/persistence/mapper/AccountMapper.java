@@ -5,16 +5,34 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * システムのアカウントを操作するマッパーインターフェースです。
+ */
 @Mapper
 public interface AccountMapper {
 
-    @Select("SELECT id, name, email, password FROM account" +
-            " WHERE email = #{email}")
-    Account findByEmail(String email);
+    /**
+     * メールアドレスでアカウントを検索します。
+     * @param mailAddress
+     * @return アカウント
+     */
+    @Select("""
+            SELECT id, name, mail_address, password FROM account
+            WHERE mail_address = #{mailAddress}
+            """)
+    Optional<Account> selectByMailAddress(String mailAddress);
 
-    @Select("SELECT auth.authority_name FROM account acc" +
-            " JOIN account_authority auth ON acc.id = auth.account_id" +
-            " WHERE email = #{email}")
-    List<String> findAuthoritiesByEmail(String email);
+    /**
+     * メールアドレスでアカウントの権限を検索します。
+     * @param mailAddress メールアドレス
+     * @return 権限のリスト
+     */
+    @Select("""
+            SELECT auth.authority_name FROM account acc
+            JOIN account_authority auth ON acc.id = auth.account_id
+            WHERE mail_address = #{mailAddress}
+            """)
+    List<String> selectAuthoritiesByMailAddress(String mailAddress);
 }

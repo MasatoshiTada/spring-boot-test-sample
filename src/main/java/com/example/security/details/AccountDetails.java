@@ -2,44 +2,31 @@ package com.example.security.details;
 
 import com.example.persistence.entity.Account;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
- * Accountを保持するUserDetails実装クラス
+ * Accountを保持するUserDetails実装クラスです。
  */
-public class AccountDetails implements UserDetails {
-
-    private final Account account;
-    private final Collection<? extends GrantedAuthority> authorities;
-
-    public AccountDetails(Account account) {
-        this.account = account;
-        List<String> authorityList = account.getAuthorities();
-        this.authorities = AuthorityUtils.createAuthorityList(
-                authorityList.toArray(new String[authorityList.size()]));
-    }
-
-    public Account getAccount() {
-        return account;
-    }
+public record AccountDetails(
+        Account account,
+        Collection<? extends GrantedAuthority> authorityList
+) implements UserDetails {
 
     @Override
     public String getUsername() {
-        return account.getEmail();
+        return account.mailAddress();
     }
 
     @Override
     public String getPassword() {
-        return account.getPassword();
+        return account.password();
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return authorities;
+        return authorityList;
     }
 
     @Override

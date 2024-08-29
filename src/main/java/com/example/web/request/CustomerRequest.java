@@ -1,41 +1,31 @@
 package com.example.web.request;
 
 import com.example.persistence.entity.Customer;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import org.hibernate.validator.constraints.Length;
+import com.example.web.constraint.Birthday;
+import com.example.web.constraint.FirstName;
+import com.example.web.constraint.LastName;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.example.web.constraint.MailAddress;
 import java.time.LocalDate;
 
-public class CustomerRequest {
-
-    @NotBlank
-    @Length(min = 1, max = 32)
-    private String firstName;
-
-    @NotBlank
-    @Length(min = 1, max = 32)
-    private String lastName;
-
-    @NotBlank
-    @Length(min = 1, max = 128)
-    @Email
-    private String email;
-
-    @NotNull
-    private LocalDate birthday;
-
-    @JsonCreator
-    public CustomerRequest(String firstName, String lastName, String email, LocalDate birthday) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.birthday = birthday;
-    }
-
-    public Customer convertToEntity() {
-        return new Customer(firstName, lastName, email, birthday);
+/**
+ * 顧客情報のリクエストJSONから変換されるクラスです。
+ * @param firstName 名
+ * @param lastName 姓
+ * @param mailAddress メールアドレス
+ * @param mailAddress 誕生日
+ */
+public record CustomerRequest(
+        @FirstName String firstName,
+        @LastName String lastName,
+        @MailAddress String mailAddress,
+        @Birthday String birthday
+) {
+    /**
+     * Customerエンティティに変換します。
+     * @return Customerエンティティ
+     */
+    public Customer toEntity() {
+        return new Customer(firstName, lastName, mailAddress, LocalDate.parse(birthday));
     }
 }

@@ -14,7 +14,7 @@
 
 <p>ようこそ、<span sec:authentication="principal.account.name">John</span>さん！</p>
 
-<a href="insertMain.html" th:href="@{insertMain}" sec:authorize="hasRole('ADMIN')">新規追加へ</a>
+<a href="saveMain.html" th:href="@{saveMain}" sec:authorize="hasRole('ADMIN')">新規追加へ</a>
 
 <table>
     <tr>
@@ -25,11 +25,11 @@
         <th>誕生日</th>
     </tr>
 
-    <tr th:each="customer : ${customers}" th:object="${customer}">
+    <tr th:each="customer : ${customerList}" th:object="${customer}">
         <td th:text="*{id}">1</td>
         <td th:text="*{lastName}">Suzuki</td>
         <td th:text="*{firstName}">Taro</td>
-        <td th:text="*{email}">tsuzuki@example.com</td>
+        <td th:text="*{mailAddress}">tsuzuki@example.com</td>
         <td th:text="*{#temporals.format(birthday, 'uuuu-MM-dd')}">2000-01-01</td>
     </tr>
     <!--/*-->
