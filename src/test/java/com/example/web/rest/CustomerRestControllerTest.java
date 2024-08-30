@@ -145,10 +145,11 @@ public class CustomerRestControllerTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(content().json("""
                             {
+                                "type":"about:blank",
+                                "title":"Bad Request",
                                 "status":400,
-                                "error":"Bad Request",
-                                "message":"Validation error",
-                                "path":"/api/customers"
+                                "detail":"Invalid request content.",
+                                "instance":"/api/customers"
                             }
                             """));
         }

@@ -12,10 +12,12 @@ import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.web.csrf.DefaultCsrfToken;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.jdbc.JdbcTestUtils;
 import org.springframework.web.client.RestClient;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,28 +38,18 @@ public class CustomerRestIntegrationTest {
     /**
      * ログインします。
      *
-     * @return セッションID（"JSESSIONID=xxxxxxxx"形式）とCSRFトークンを持つLoginResult
+     * @return セッションID（"JSESSIONID=xxxxxxxx"形式）とCSRFトークンを持つSessionTokenPair
      */
-    LoginResult login() {
-        // CSRFトークン取得
-        ResponseEntity<DefaultCsrfToken> csrfTokenResponse = restClient.get()
-                .uri("/api/csrf")
-                .retrieve()
-                .toEntity(DefaultCsrfToken.class);
-        String csrfToken = csrfTokenResponse.getBody().getToken();
-        String sessionCookie = csrfTokenResponse.getHeaders().get("Set-Cookie").getFirst();
-        String sessionId = Arrays.stream(sessionCookie.split(";"))
-                .filter(element -> element.startsWith("JSESSIONID="))
-                .findFirst()
-                .get();
+    SessionTokenPair login() {
+        // 初回CSRFトークン取得
+        SessionTokenPair pair1 = getCsrfToken(null);
 
         // ADMIN権限でログイン
         ResponseEntity<Void> loginResponse = restClient.post()
                 .uri("/login")
-                .body("username=admin@example.com&password=admin")
+                .body("username=admin@example.com&password=admin&_csrf=" + pair1.csrfToken())  // CSRFトークンをリクエストパラメーターに指定
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .header("Cookie", sessionId)
-                .header("X-CSRF-TOKEN", csrfToken)
+                .header("Cookie", pair1.sessionId())
                 .retrieve()
                 .toBodilessEntity();
         String newSessionCookie = loginResponse.getHeaders().get(HttpHeaders.SET_COOKIE).getFirst();
@@ -65,9 +57,35 @@ public class CustomerRestIntegrationTest {
                 .filter(element -> element.startsWith("JSESSIONID="))
                 .findFirst()
                 .get();
-        return new LoginResult(newSessionId, csrfToken);
+
+        // 2回目のCSRFトークン取得（ログイン成功時にCSRFトークンが変更されているため）
+        // See https://github.com/spring-projects/spring-security/blob/main/web/src/main/java/org/springframework/security/web/csrf/CsrfAuthenticationStrategy.java#L70
+        SessionTokenPair pair2 = getCsrfToken(newSessionId);
+        return pair2;
     }
 
+    SessionTokenPair getCsrfToken(String sessionId) {
+        // CSRFトークンを取得
+        ResponseEntity<DefaultCsrfToken> csrfTokenResponse = restClient.get()
+                .uri("/api/csrf")
+                .header("Cookie", sessionId != null ? sessionId : "foo=bar" /* セッションがまだ無い場合は適当なCookieを設定 */)
+                .retrieve()
+                .toEntity(DefaultCsrfToken.class);
+        String csrfToken = csrfTokenResponse.getBody().getToken();
+        // Set-Cookieヘッダーを取得
+        List<String> setCookieHeader = csrfTokenResponse.getHeaders().getOrEmpty("Set-Cookie");
+        // Set-Cookieヘッダーが無い場合は引数のsessionIdを返す
+        if (setCookieHeader.isEmpty()) {
+            return new SessionTokenPair(sessionId, csrfToken);
+        }
+        // Set-Cookieヘッダーがある場合は新しいセッションIDを返す
+        String sessionCookie = setCookieHeader.getFirst();
+        String newSessionId = Arrays.stream(sessionCookie.split(";"))
+                .filter(element -> element.startsWith("JSESSIONID="))
+                .findFirst()
+                .get();
+        return new SessionTokenPair(newSessionId, csrfToken);
+    }
 
     @Nested
     @DisplayName("全顧客の取得")
@@ -76,10 +94,10 @@ public class CustomerRestIntegrationTest {
         @Sql({"classpath:schema.sql", "classpath:test-data.sql"})
         @DisplayName("ADMIN権限で全顧客を取得できる")
         void success() {
-            LoginResult loginResult = login();
+            SessionTokenPair sessionTokenPair = login();
             ResponseEntity<String> responseEntity = restClient.get()
                     .uri("/api/customers")
-                    .header("Cookie", loginResult.sessionId())
+                    .header("Cookie", sessionTokenPair.sessionId())
                     .retrieve()
                     .toEntity(String.class);
             assertAll(
@@ -113,12 +131,12 @@ public class CustomerRestIntegrationTest {
         @DisplayName("ADMIN権限で顧客登録できる")
         @Sql({"classpath:schema.sql", "classpath:test-data.sql"})
         void success() {
-            LoginResult loginResult = login();
+            SessionTokenPair sessionTokenPair = login();
             ResponseEntity<Void> responseEntity = restClient.post()
                     .uri("/api/customers")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .header("Cookie", loginResult.sessionId())
-                    .header("X-CSRF-TOKEN", loginResult.csrfToken())
+                    .header("Cookie", sessionTokenPair.sessionId())
+                    .header("X-CSRF-TOKEN", sessionTokenPair.csrfToken())
                     .body("""
                             {
                                 "firstName":"天",
@@ -131,7 +149,14 @@ public class CustomerRestIntegrationTest {
                     .toBodilessEntity();
             assertAll(
                     () -> assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode()),
-                    () -> assertEquals(URI.create("/api/customers/3"), responseEntity.getHeaders().getLocation())
+                    () -> assertEquals(URI.create("/api/customers/3"), responseEntity.getHeaders().getLocation()),
+                    () -> assertEquals(1, JdbcTestUtils.countRowsInTableWhere(jdbcTemplate, "customer", """
+                            id = 3
+                            AND first_name = '天'
+                            AND last_name = '山﨑'
+                            AND mail_address = 'tyamasaki@sakura.com'
+                            AND birthday = '2005-09-28'
+                            """))
             );
         }
     }
