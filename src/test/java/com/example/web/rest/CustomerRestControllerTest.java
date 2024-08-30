@@ -146,10 +146,16 @@ public class CustomerRestControllerTest {
                     .andExpect(content().json("""
                             {
                                 "type":"about:blank",
-                                "title":"Bad Request",
+                                "title":"バリデーションエラー",
                                 "status":400,
-                                "detail":"Invalid request content.",
-                                "instance":"/api/customers"
+                                "detail":"不正な入力です",
+                                "instance":"/api/customers",
+                                "messages": [
+                                    "名は1文字以上32文字以下です",
+                                    "姓は1文字以上32文字以下です",
+                                    "メールアドレスはxxx@xxx形式です",
+                                    "誕生日はyyyy-MM-dd形式です"
+                                ]
                             }
                             """));
         }
