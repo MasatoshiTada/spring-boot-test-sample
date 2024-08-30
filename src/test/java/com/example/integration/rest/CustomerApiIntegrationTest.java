@@ -1,6 +1,6 @@
 package com.example.integration.rest;
 
-import com.example.annotation.IntegrationTest;
+import com.example.annotation.ApiIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,8 +21,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@IntegrationTest
-public class CustomerRestIntegrationTest {
+@ApiIntegrationTest
+@Sql({"classpath:schema.sql", "classpath:test-data.sql"})
+public class CustomerApiIntegrationTest {
     RestClient restClient;
 
     @Autowired
@@ -32,12 +33,14 @@ public class CustomerRestIntegrationTest {
     void beforeEach(@Autowired RestClient.Builder restClientBuilder, @LocalServerPort int port) {
         restClient = restClientBuilder
                 .baseUrl("http://localhost:" + port)
+                .defaultStatusHandler(status -> true, (request, response) -> {
+                    // ステータスコードが4xx・5xxであっても何もしない
+                })
                 .build();
     }
 
     /**
      * ログインします。
-     *
      * @return セッションID（"JSESSIONID=xxxxxxxx"形式）とCSRFトークンを持つSessionTokenPair
      */
     SessionTokenPair login() {
@@ -64,6 +67,11 @@ public class CustomerRestIntegrationTest {
         return pair2;
     }
 
+    /**
+     * セッションIDとCSRFトークンを取得します。
+     * @param sessionId セッションID。未作成（初回アクセス）の場合はnull
+     * @return セッションIDとCSRFトークンを持つSessionTokenPair
+     */
     SessionTokenPair getCsrfToken(String sessionId) {
         // CSRFトークンを取得
         ResponseEntity<DefaultCsrfToken> csrfTokenResponse = restClient.get()
@@ -91,7 +99,6 @@ public class CustomerRestIntegrationTest {
     @DisplayName("全顧客の取得")
     class GetCustomers {
         @Test
-        @Sql({"classpath:schema.sql", "classpath:test-data.sql"})
         @DisplayName("ADMIN権限で全顧客を取得できる")
         void success() {
             SessionTokenPair sessionTokenPair = login();
@@ -129,7 +136,6 @@ public class CustomerRestIntegrationTest {
     class PostCustomer {
         @Test
         @DisplayName("ADMIN権限で顧客登録できる")
-        @Sql({"classpath:schema.sql", "classpath:test-data.sql"})
         void success() {
             SessionTokenPair sessionTokenPair = login();
             ResponseEntity<Void> responseEntity = restClient.post()

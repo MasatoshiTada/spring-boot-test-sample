@@ -16,6 +16,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @MapperTest
+@Sql({"classpath:schema.sql", "classpath:test-data.sql"})
 public class CustomerMapperTest {
 
     @Autowired
@@ -26,7 +27,6 @@ public class CustomerMapperTest {
 
     @Nested
     @DisplayName("selectAll()")
-    @Sql({"classpath:schema.sql", "classpath:test-data.sql"})
     class SelectAll {
         @Test
         @DisplayName("全件取得できる")
@@ -41,7 +41,6 @@ public class CustomerMapperTest {
 
     @Nested
     @DisplayName("insert()")
-    @Sql({"classpath:schema.sql", "classpath:test-data.sql"})
     class Insert {
         @Test
         @DisplayName("1件追加できる")

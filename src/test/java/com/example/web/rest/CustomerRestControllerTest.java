@@ -102,7 +102,7 @@ public class CustomerRestControllerTest {
 
         MockHttpServletRequestBuilder createRequest(String json) {
             return post("/api/customers")
-                    .with(csrf())
+                    .with(csrf().asHeader())
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(json);
         }

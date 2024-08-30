@@ -14,6 +14,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 
 @MapperTest
+@Sql({"classpath:schema.sql", "classpath:test-data.sql"})
 public class AccountMapperTest {
 
     @Autowired
@@ -21,7 +22,6 @@ public class AccountMapperTest {
 
     @Nested
     @DisplayName("selectByMailAddress()")
-    @Sql({"classpath:schema.sql", "classpath:test-data.sql"})
     class SelectByMailAddress {
         @Test
         @DisplayName("存在するメールアドレスを指定すると、該当するアカウントが取得できる")
@@ -40,7 +40,6 @@ public class AccountMapperTest {
 
     @Nested
     @DisplayName("selectAuthoritiesByMailAddress")
-    @Sql({"classpath:schema.sql", "classpath:test-data.sql"})
     class SelectAuthoritiesByMailAddress {
         @Test
         @DisplayName("存在するメールアドレスを指定すると、該当する権限のリストが取得できる")
